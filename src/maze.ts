@@ -306,8 +306,8 @@ export default class Maze implements Renderable {
     const { x, y } = newPos;
     const { map } = state;
 
-    const col = Math.min((x), map[0].length - 1);
-    const row = Math.min((y), map.length - 1);
+    const col = Math.min(x, map[0].length - 1);
+    const row = Math.min(y, map.length - 1);
     const tile = getTileType(map[row][col]);
 
     return !tile.isWall;
