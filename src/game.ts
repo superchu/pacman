@@ -5,8 +5,9 @@
 import { GameState, Key, Direction } from './enums';
 import { loadSprites } from './assetLoader';
 import { Renderable } from './renderable';
-import State, { Vector2d } from './state';
+import State from './state';
 import Maze from './maze';
+import Vector2d from './vector2d';
 import PacMan from './pacman';
 
 export default class Game {
@@ -47,18 +48,20 @@ export default class Game {
       return;
     }
 
+    const { player } = state;
+
     switch (e.keyCode) {
       case Key.Left:
-        state.nextDirection = Direction.Left;
+        player.nextDirection = Direction.Left;
         break;
       case Key.Right:
-        state.nextDirection = Direction.Right;
+        player.nextDirection = Direction.Right;
         break;
       case Key.Down:
-        state.nextDirection = Direction.Down;
+        player.nextDirection = Direction.Down;
         break;
       case Key.Up:
-        state.nextDirection = Direction.Up;
+        player.nextDirection = Direction.Up;
         break;
     }
   }
@@ -86,143 +89,8 @@ export default class Game {
 
   update(gameTime: number): void {
     if (gameTime % 2 === 0) {
-      this.movePlayer();
-      this.checkPosition();
       this.gameObjects.forEach(obj => obj.update(gameTime, this.state));
     }
-  }
-
-  private movePlayer(): void {
-    const {
-      playerPosition,
-      targetPosition,
-      direction,
-      nextDirection
-    } = this.state;
-
-    let { x, y } = targetPosition;
-
-    const shouldUpdateTarget = this.shouldUpdateTarget();
-    const maxX = Maze.maxX(this.state);
-    const maxY = Maze.maxY(this.state);
-
-    if (shouldUpdateTarget) {
-
-      const newDir = Maze.canMove(this.getNextPosition(), this.state) && nextDirection !== direction;
-
-      if (newDir) {
-        this.state.direction = nextDirection;
-      }
-
-      switch (newDir ? nextDirection : direction) {
-        case Direction.Right:
-          x++;
-          break;
-        case Direction.Left:
-          x--;
-          break;
-        case Direction.Down:
-          y++;
-          break;
-        case Direction.Up:
-          y--;
-          break;
-      }
-
-      if (x < 0) {
-        x = maxX;
-      } else if (x > maxX) {
-        x = 0;
-      }
-
-      if (y < 0) {
-        y = maxY;
-      } else if (y > maxY) {
-        y = 0;
-      }
-
-      const newPos = new Vector2d(x, y);
-      if (Maze.canMove(newPos, this.state)) {
-        this.state.targetPosition = newPos;
-      }
-    } else {
-      let { x, y } = playerPosition;
-      switch (direction) {
-        case Direction.Right:
-          x += .5;
-          break;
-        case Direction.Left:
-          x -= .5;
-          break;
-        case Direction.Down:
-          y += .5;
-          break;
-        case Direction.Up:
-          y -= .5;
-          break;
-      }
-
-      if (x < 0) {
-        x = maxX;
-      } else if (x > maxX) {
-        x = 0;
-      }
-
-      if (y < 0) {
-        y = maxY;
-      } else if (y > maxY) {
-        y = 0;
-      }
-
-      this.state.playerPosition = new Vector2d(x, y);
-    }
-  }
-
-  private shouldUpdateTarget(): boolean {
-    const {
-      targetPosition,
-      playerPosition,
-    } = this.state;
-
-    return playerPosition.x === targetPosition.x && playerPosition.y === targetPosition.y;
-  }
-
-  private getNextPosition() {
-    const { nextDirection, targetPosition } = this.state;
-    let { x, y } = targetPosition;
-
-    switch (nextDirection) {
-      case Direction.Right:
-        x++;
-        break;
-      case Direction.Left:
-        x--;
-        break;
-      case Direction.Down:
-        y++;
-        break;
-      case Direction.Up:
-        y--;
-        break;
-    }
-
-    return new Vector2d(x, y);
-  }
-
-  private checkPosition(): void {
-    const { playerPosition } = this.state;
-    const tile = Maze.getTile(playerPosition, this.state);
-
-    if (tile.isFood) {
-      if (tile.isPowerup) {
-        this.state.score += 50;
-      } else {
-        this.state.score += 10;
-      }
-
-      this.state.updateMap(new Vector2d(tile.col, tile.row), 0);
-    }
-
   }
 
   render(gameTime: number, ctx: CanvasRenderingContext2D): void {

@@ -1,9 +1,142 @@
 import { Renderable } from './renderable';
 import { Sprite } from './assetLoader';
-import State, { Vector2d } from './state';
 import { Direction } from './enums';
+import State from './state';
+import Vector2d from './vector2d';
+import Maze from './maze';
 
 const TILE_SIZE = 32;
+
+const movePlayer = (state: State): State => {
+  const { player } = state;
+  const {
+    position,
+    target,
+    direction,
+    nextDirection
+  } = player;
+
+  let { x, y } = target;
+
+  const maxX = Maze.maxX(state);
+  const maxY = Maze.maxY(state);
+
+  if (shouldUpdateTarget(state)) {
+
+    const newDir = Maze.canMove(getNextPosition(state), state) && nextDirection !== direction;
+
+    if (newDir) {
+      player.direction = nextDirection;
+    }
+
+    switch (newDir ? nextDirection : direction) {
+      case Direction.Right:
+        x++;
+        break;
+      case Direction.Left:
+        x--;
+        break;
+      case Direction.Down:
+        y++;
+        break;
+      case Direction.Up:
+        y--;
+        break;
+    }
+
+    if (x < 0) {
+      x = maxX;
+    } else if (x > maxX) {
+      x = 0;
+    }
+
+    if (y < 0) {
+      y = maxY;
+    } else if (y > maxY) {
+      y = 0;
+    }
+
+    const newPos = new Vector2d(x, y);
+    if (Maze.canMove(newPos, state)) {
+      player.target = newPos;
+      // state.targetPosition = newPos;
+    }
+  } else {
+    let { x, y } = position;
+    switch (direction) {
+      case Direction.Right:
+        x += .5;
+        break;
+      case Direction.Left:
+        x -= .5;
+        break;
+      case Direction.Down:
+        y += .5;
+        break;
+      case Direction.Up:
+        y -= .5;
+        break;
+    }
+
+    if (x < 0) {
+      x = maxX;
+    } else if (x > maxX) {
+      x = 0;
+    }
+
+    if (y < 0) {
+      y = maxY;
+    } else if (y > maxY) {
+      y = 0;
+    }
+
+    player.position = new Vector2d(x, y);
+  }
+
+  return state;
+};
+
+const shouldUpdateTarget = (state: State): boolean => {
+  const { player } = state;
+  return Vector2d.isSame(player.position, player.target);
+};
+
+const getNextPosition = (state: State): Vector2d => {
+  const { nextDirection, target } = state.player;
+  let { x, y } = target;
+
+  switch (nextDirection) {
+    case Direction.Right:
+      x++;
+      break;
+    case Direction.Left:
+      x--;
+      break;
+    case Direction.Down:
+      y++;
+      break;
+    case Direction.Up:
+      y--;
+      break;
+  }
+
+  return new Vector2d(x, y);
+};
+
+const checkPosition = (state: State): void => {
+  const { position } = state.player;
+  const tile = Maze.getTile(position, state);
+
+  if (tile.isFood) {
+    if (tile.isPowerup) {
+      state.score += 50;
+    } else {
+      state.score += 10;
+    }
+
+    state.updateMap(new Vector2d(tile.col, tile.row), 0);
+  }
+};
 
 export default class PacMan implements Renderable {
   private position: Vector2d;
@@ -23,17 +156,19 @@ export default class PacMan implements Renderable {
   }
 
   update(gameTime: number, state: State) {
-    const { playerPosition, direction } = state;
+    const { player } = movePlayer(state);
     const { position } = this;
 
     if (position) {
-      if (playerPosition.x !== position.x || playerPosition.y !== position.y) {
+      if (player.position.x !== position.x || player.position.y !== position.y) {
         this.frame++;
       }
     }
 
-    this.position = playerPosition;
-    this.direction = direction;
+    this.position = player.position;
+    this.direction = player.direction;
+
+    checkPosition(state);
   }
 
   render(gameTime: number, ctx: CanvasRenderingContext2D) {
@@ -54,7 +189,7 @@ export default class PacMan implements Renderable {
     let offsetX = 0;
     let offsetY = 0;
 
-    switch(this.direction) {
+    switch (this.direction) {
       case Direction.Right:
         ctx.rotate(0);
         break;

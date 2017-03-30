@@ -1,17 +1,6 @@
 import { Direction } from './enums';
-
-export class Vector2d {
-  constructor(private _x: number, private _y: number) {
-  }
-
-  public get x() {
-    return this._x;
-  }
-
-  public get y() {
-    return this._y;
-  }
-}
+import Vector2d from './vector2d';
+import Entity from './entity';
 
 export default class State {
   private _map: number[][] = [];
@@ -19,26 +8,10 @@ export default class State {
     return this._map;
   }
 
-  private _playerPosition: Vector2d = new Vector2d(1, 1);
-  public get playerPosition() {
-    return this._playerPosition;
+  private _player: Entity;
+  public get player() {
+    return this._player;
   }
-
-  public set playerPosition(position: Vector2d) {
-    this._playerPosition = position;
-  }
-
-  private _targetPosition: Vector2d = new Vector2d(1, 1);
-  public get targetPosition() {
-    return this._targetPosition;
-  }
-
-  public set targetPosition(position: Vector2d) {
-    this._targetPosition = position;
-  }
-
-  public direction: Direction = Direction.Right;
-  public nextDirection: Direction = Direction.Right;
 
   private _score: number = 0;
   public get score() {
@@ -58,11 +31,13 @@ export default class State {
   }
 
   private resetPlayer(): void {
-    this._playerPosition = new Vector2d(13.5, 23);
-    this._targetPosition = new Vector2d(14, 23);
+    this._player = new Entity(
+      new Vector2d(13.5, 23),
+      new Vector2d(14., 23),
+      Direction.Right
+    );
+
     this._score = 0;
-    this.direction = Direction.Right;
-    this.nextDirection = Direction.Right;
   }
 
   updateMap(pos: Vector2d, tile: number): void {

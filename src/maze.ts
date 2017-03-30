@@ -1,6 +1,7 @@
 import { Renderable } from './renderable';
 import { Sprite } from './assetLoader';
-import State, { Vector2d } from './state';
+import State from './state';
+import Vector2d from './vector2d';
 
 const TILE_SIZE = 16;
 
