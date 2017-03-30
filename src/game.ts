@@ -226,23 +226,17 @@ export default class Game {
   }
 
   render(gameTime: number, ctx: CanvasRenderingContext2D): void {
-    console.log(`Score: ${this.state.score}`);
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, this.width, this.height);
+
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`${this.state.score}`, 15, 22);
 
     ctx.save();
     ctx.translate(0, 40);
 
     this.gameObjects.forEach(obj => obj.render(gameTime, ctx));
-    
-    // const { x, y } = this.state.targetPosition;
-    // ctx.fillStyle = 'rgba(255, 0, 0, .5)';
-    // ctx.fillRect(
-    //   x * 16 - 8,
-    //   y * 16 - 8,
-    //   32,
-    //   32
-    // );
 
     ctx.restore();
   }
