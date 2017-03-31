@@ -59,7 +59,6 @@ const movePlayer = (state: State): State => {
     const newPos = new Vector2d(x, y);
     if (Maze.canMove(newPos, state)) {
       player.target = newPos;
-      // state.targetPosition = newPos;
     }
   } else {
     let { x, y } = position;
@@ -129,6 +128,7 @@ const checkPosition = (state: State): void => {
 
   if (tile.isFood) {
     if (tile.isPowerup) {
+      state.hasPowerup = true;
       state.score += 50;
     } else {
       state.score += 10;

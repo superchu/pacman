@@ -35,6 +35,15 @@ export default class Entity {
     this._nextDirection = value;
   }
 
+  private _isDead: boolean = false;
+  public get isDead(): boolean {
+    return this._isDead;
+  }
+
+  public set isDead(value: boolean) {
+    this._isDead = value;
+  }
+
   constructor(private _position: Vector2d, private _target: Vector2d, private _direction: Direction)  {
     this._nextDirection = _direction;
   }

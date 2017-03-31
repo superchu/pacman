@@ -13,6 +13,11 @@ export default class State {
     return this._player;
   }
 
+  private _blinky: Entity;
+  public get blinky() {
+    return this._blinky;
+  }
+
   private _score: number = 0;
   public get score() {
     return this._score;
@@ -22,22 +27,54 @@ export default class State {
     this._score = score;
   }
 
+  private _powerupTimer: number = 0;
+  public get powerupTimer() {
+    return this._powerupTimer;
+  }
+
+  public get hasPowerup(): boolean {
+    if (this._powerupTimer > 0) {
+      this._powerupTimer -= .2;
+    }
+
+    return this._powerupTimer > 0;
+  }
+
+  public set hasPowerup(value: boolean) {
+    if (value) {
+      this._powerupTimer = 100;
+    } else {
+      this._powerupTimer = 0;
+    }
+  }
+
   constructor() {
   }
 
   reset(): void {
     this.resetPlayer();
+    this.resetGhosts();
     this.resetMap();
+
+    this.hasPowerup = false;
   }
 
   private resetPlayer(): void {
     this._player = new Entity(
       new Vector2d(13.5, 23),
-      new Vector2d(14., 23),
+      new Vector2d(14, 23),
       Direction.Right
     );
 
     this._score = 0;
+  }
+
+  private resetGhosts(): void {
+    this._blinky = new Entity(
+      new Vector2d(13.5, 11),
+      new Vector2d(12, 11),
+      Direction.Left
+    );
   }
 
   updateMap(pos: Vector2d, tile: number): void {
@@ -59,9 +96,9 @@ export default class State {
       [0, 0, 0, 0, 0, 13, 37, 15, 22, 11, 11, 12, 0, 10, 12, 0, 10, 11, 11, 21, 16, 37, 14, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 13, 37, 15, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 16, 37, 14, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 13, 37, 15, 16, 0, 25, 26, 26, 0, 0, 26, 26, 27, 0, 15, 16, 37, 14, 0, 0, 0, 0, 0],
-      [2, 2, 2, 2, 2, 12, 37, 10, 12, 0, 31, 0, 0, 0, 0, 0, 0, 32, 0, 10, 12, 37, 10, 2, 2, 2, 2, 2],
-      [0, 0, 0, 0, 0, 0, 37, 0, 0, 0, 31, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 37, 0, 0, 0, 0, 0, 0],
-      [5, 5, 5, 5, 5, 9, 37, 7, 9, 0, 31, 0, 0, 0, 0, 0, 0, 32, 0, 7, 9, 37, 7, 5, 5, 5, 5, 5],
+      [2, 2, 2, 2, 2, 12, 37, 10, 12, 0, 31, 39, 39, 0, 0, 39, 39, 32, 0, 10, 12, 37, 10, 2, 2, 2, 2, 2],
+      [0, 0, 0, 0, 0, 0, 37, 0, 0, 0, 31, 39, 0, 0, 0, 0, 39, 32, 0, 0, 0, 37, 0, 0, 0, 0, 0, 0],
+      [5, 5, 5, 5, 5, 9, 37, 7, 9, 0, 31, 39, 39, 39, 39, 39, 39, 32, 0, 7, 9, 37, 7, 5, 5, 5, 5, 5],
       [0, 0, 0, 0, 0, 13, 37, 15, 16, 0, 28, 29, 29, 29, 29, 29, 29, 30, 0, 15, 16, 37, 14, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 13, 37, 15, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 16, 37, 14, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 13, 37, 15, 16, 0, 7, 8, 8, 8, 8, 8, 8, 9, 0, 15, 16, 37, 14, 0, 0, 0, 0, 0],

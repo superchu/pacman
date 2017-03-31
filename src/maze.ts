@@ -290,6 +290,14 @@ const getTileType = (tile: number): TileType => {
         isFood: true,
         isPowerup: true
       };
+    case 39:
+      return {
+        x: 0,
+        y: 0,
+        isWall: true,
+        isFood: false,
+        isPowerup: false
+      };
     case 0:
     default:
       return {
