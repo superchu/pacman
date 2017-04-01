@@ -34,7 +34,7 @@ export default class State {
 
   public get hasPowerup(): boolean {
     if (this._powerupTimer > 0) {
-      this._powerupTimer -= .2;
+      this._powerupTimer -= .4;
     }
 
     return this._powerupTimer > 0;

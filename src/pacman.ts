@@ -1,126 +1,13 @@
 import { Renderable } from './renderable';
 import { Sprite } from './assetLoader';
 import { Direction } from './enums';
+import { moveEntity } from './entity';
 import State from './state';
 import Vector2d from './vector2d';
 import Maze from './maze';
 
 const TILE_SIZE = 32;
-
-const movePlayer = (state: State): State => {
-  const { player } = state;
-  const {
-    position,
-    target,
-    direction,
-    nextDirection
-  } = player;
-
-  let { x, y } = target;
-
-  const maxX = Maze.maxX(state);
-  const maxY = Maze.maxY(state);
-
-  if (shouldUpdateTarget(state)) {
-
-    const newDir = Maze.canMove(getNextPosition(state), state) && nextDirection !== direction;
-
-    if (newDir) {
-      player.direction = nextDirection;
-    }
-
-    switch (newDir ? nextDirection : direction) {
-      case Direction.Right:
-        x++;
-        break;
-      case Direction.Left:
-        x--;
-        break;
-      case Direction.Down:
-        y++;
-        break;
-      case Direction.Up:
-        y--;
-        break;
-    }
-
-    if (x < 0) {
-      x = maxX;
-    } else if (x > maxX) {
-      x = 0;
-    }
-
-    if (y < 0) {
-      y = maxY;
-    } else if (y > maxY) {
-      y = 0;
-    }
-
-    const newPos = new Vector2d(x, y);
-    if (Maze.canMove(newPos, state)) {
-      player.target = newPos;
-    }
-  } else {
-    let { x, y } = position;
-    switch (direction) {
-      case Direction.Right:
-        x += .5;
-        break;
-      case Direction.Left:
-        x -= .5;
-        break;
-      case Direction.Down:
-        y += .5;
-        break;
-      case Direction.Up:
-        y -= .5;
-        break;
-    }
-
-    if (x < 0) {
-      x = maxX;
-    } else if (x > maxX) {
-      x = 0;
-    }
-
-    if (y < 0) {
-      y = maxY;
-    } else if (y > maxY) {
-      y = 0;
-    }
-
-    player.position = new Vector2d(x, y);
-  }
-
-  return state;
-};
-
-const shouldUpdateTarget = (state: State): boolean => {
-  const { player } = state;
-  return Vector2d.isSame(player.position, player.target);
-};
-
-const getNextPosition = (state: State): Vector2d => {
-  const { nextDirection, target } = state.player;
-  let { x, y } = target;
-
-  switch (nextDirection) {
-    case Direction.Right:
-      x++;
-      break;
-    case Direction.Left:
-      x--;
-      break;
-    case Direction.Down:
-      y++;
-      break;
-    case Direction.Up:
-      y--;
-      break;
-  }
-
-  return new Vector2d(x, y);
-};
+const SPEED = .5;
 
 const checkPosition = (state: State): void => {
   const { position } = state.player;
@@ -156,8 +43,10 @@ export default class PacMan implements Renderable {
   }
 
   update(gameTime: number, state: State) {
-    const { player } = movePlayer(state);
+    const { player } = state;
     const { position } = this;
+
+    moveEntity(player, SPEED, state);
 
     if (position) {
       if (player.position.x !== position.x || player.position.y !== position.y) {

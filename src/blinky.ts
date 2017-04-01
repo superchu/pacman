@@ -1,4 +1,4 @@
-import { Ghost, ChaseMode, getNextPosition } from './ghost';
+import { Ghost, ChaseMode } from './ghost';
 import { Sprite } from './assetLoader';
 import { Direction } from './enums';
 import State from './state';

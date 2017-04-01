@@ -1,6 +1,7 @@
 import { Renderable } from './renderable';
 import { Sprite } from './assetLoader';
 import { Direction } from './enums';
+import { getNextPosition, moveEntity } from './entity';
 import State from './state';
 import Vector2d from './vector2d';
 import Maze from './maze';
@@ -18,137 +19,23 @@ export enum ChaseMode {
   Frightened
 }
 
-const moveGhost = (ghost: Entity, state: State): State => {
-  const {
-    position,
-    target,
-    direction,
-    nextDirection
-  } = ghost;
-
-  let { x, y } = target;
-
-  const maxX = Maze.maxX(state);
-  const maxY = Maze.maxY(state);
-  const isFrightened = state.hasPowerup;
-
-  if (shouldUpdateTarget(state)) {
-    const newDir = Maze.canMove(getNextPosition(state, nextDirection), state) && nextDirection !== direction;
-
-    if (newDir) {
-      ghost.direction = nextDirection;
-    }
-
-    switch (newDir ? nextDirection : direction) {
-      case Direction.Right:
-        x++;
-        break;
-      case Direction.Left:
-        x--;
-        break;
-      case Direction.Down:
-        y++;
-        break;
-      case Direction.Up:
-        y--;
-        break;
-    }
-
-    if (x < 0) {
-      x = maxX;
-    } else if (x > maxX) {
-      x = 0;
-    }
-
-    if (y < 0) {
-      y = maxY;
-    } else if (y > maxY) {
-      y = 0;
-    }
-
-    const newPos = new Vector2d(x, y);
-    if (Maze.canMove(newPos, state)) {
-      ghost.target = newPos;
-    }
-  } else {
-    let { x, y } = position;
-    const speed = isFrightened ? .5 : .5;
-    switch (direction) {
-      case Direction.Right:
-        x += speed;
-        break;
-      case Direction.Left:
-        x -= speed;
-        break;
-      case Direction.Down:
-        y += speed;
-        break;
-      case Direction.Up:
-        y -= speed;
-        break;
-    }
-
-    if (x < 0) {
-      x = maxX;
-    } else if (x > maxX) {
-      x = 0;
-    }
-
-    if (y < 0) {
-      y = maxY;
-    } else if (y > maxY) {
-      y = 0;
-    }
-
-    ghost.position = new Vector2d(x, y);
-  }
-
-  return state;
-};
-
-const shouldUpdateTarget = (state: State): boolean => {
-  const { blinky } = state;
-  return Vector2d.isSame(blinky.position, blinky.target);
-};
-
-export const getNextPosition = (state: State, direction: Direction): Vector2d => {
-  const { target } = state.blinky;
-  let { x, y } = target;
-
-  switch (direction) {
-    case Direction.Right:
-      x++;
-      break;
-    case Direction.Left:
-      x--;
-      break;
-    case Direction.Down:
-      y++;
-      break;
-    case Direction.Up:
-      y--;
-      break;
-  }
-
-  return new Vector2d(x, y);
-};
-
 const checkPosition = (ghost: Entity, state: State): void => {
   const { player, hasPowerup } = state;
 
   if (ghost.isDead) {
-    if (ghost.position.x === TARGET_WHEN_DEAD.x && ghost.position.y === TARGET_WHEN_DEAD.y) {
+    if (Vector2d.isSame(ghost.position, TARGET_WHEN_DEAD)) {
       ghost.isDead = false;
       tempTarget = TARGET_OUTSIDE_HOUSE;
     }
   } else {
-    if (tempTarget && ghost.position.x === tempTarget.x && ghost.position.y === tempTarget.y) {
+    if (tempTarget && Vector2d.isSame(ghost.position, tempTarget)) {
       tempTarget = null;
     }
 
-    if (player.position.x === ghost.position.x && player.position.y === ghost.position.y) {
+    if (Vector2d.isSame(player.position, ghost.position)) {
       if (hasPowerup) {
         ghost.isDead = true;
+        state.score += 200;
       }
     }
   }
@@ -184,7 +71,10 @@ export abstract class Ghost implements Renderable {
     } = ghost;
 
     let nextDirection = direction;
-    const isFrightened = mode === ChaseMode.Frightened;
+    const isFrightened = mode === ChaseMode.Frightened && !isDead;
+
+    console.log('isFrightened', isFrightened);
+    console.log('shouldMakeDecision', shouldMakeDecision);
 
     if (shouldMakeDecision) {
       const target = !isDead ? (tempTarget || this.getTarget(mode, state)) : TARGET_WHEN_DEAD;
@@ -231,9 +121,17 @@ export abstract class Ghost implements Renderable {
         }
       }
 
+      // Last resort bailout!
+      if (!options.length) {
+        options.push(Direction.Left);
+        options.push(Direction.Right);
+        options.push(Direction.Up);
+        options.push(Direction.Down);
+      }
+
       let distance: number = 0;
       options.forEach(dir => {
-        const { x, y } = getNextPosition(state, dir);
+        const { x, y } = getNextPosition(dir, ghost.target);
         const dx = target.x - x;
         const dy = target.y - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -254,15 +152,27 @@ export abstract class Ghost implements Renderable {
     return nextDirection;
   }
 
+  private getSpeed() {
+    const {
+      isFrightened
+    } = this;
+
+    if (isFrightened) {
+      return .2;
+    }
+
+    return .5;
+  }
+
   update(gameTime: number, state: State) {
-    moveGhost(this.getGhost(state), state);
-
     const ghost = this.getGhost(state);
-    const { position } = this;
-
     this.isDead = ghost.isDead;
-    this.isFrightened = state.hasPowerup;
+    this.isFrightened = state.hasPowerup && !this.isDead;
     this.isFlashing = state.powerupTimer < 20;
+
+    moveEntity(this.getGhost(state), this.getSpeed(), state);
+
+    const { position } = this;
 
     if (position) {
       if (ghost.position.x !== position.x || ghost.position.y !== position.y) {
@@ -277,16 +187,16 @@ export abstract class Ghost implements Renderable {
   }
 
   private updateDirection(ghost: Entity, state: State): void {
-    const { direction } = ghost;
+    const { direction, target } = ghost;
     const { isFrightened } = this;
     const forceMove = state.powerupTimer >= 50;
-    const canMoveInCurrentDirection = Maze.canMove(getNextPosition(state, direction), state);
+    const canMoveInCurrentDirection = Maze.canMove(getNextPosition(direction, target), state);
     const isMovingX = direction === Direction.Left || direction === Direction.Right;
     const isMovingY = direction === Direction.Up || direction === Direction.Down;
-    const canMoveLeft = (forceMove || direction !== Direction.Right) && Maze.canMove(getNextPosition(state, Direction.Left), state);
-    const canMoveRight = (forceMove || direction !== Direction.Left) && Maze.canMove(getNextPosition(state, Direction.Right), state);
-    const canMoveUp = (forceMove || direction !== Direction.Down) && Maze.canMove(getNextPosition(state, Direction.Up), state);
-    const canMoveDown = (forceMove || direction !== Direction.Up) && Maze.canMove(getNextPosition(state, Direction.Down), state);
+    const canMoveLeft = (forceMove || direction !== Direction.Right) && Maze.canMove(getNextPosition(Direction.Left, target), state);
+    const canMoveRight = (forceMove || direction !== Direction.Left) && Maze.canMove(getNextPosition(Direction.Right, target), state);
+    const canMoveUp = (forceMove || direction !== Direction.Down) && Maze.canMove(getNextPosition(Direction.Up, target), state);
+    const canMoveDown = (forceMove || direction !== Direction.Up) && Maze.canMove(getNextPosition(Direction.Down, target), state);
     const canMoveX = (isMovingX && canMoveInCurrentDirection) || (!isMovingX && (canMoveLeft || canMoveRight));
     const canMoveY = (isMovingY && canMoveInCurrentDirection) || (!isMovingY && (canMoveUp || canMoveDown));
 
@@ -385,14 +295,5 @@ export abstract class Ghost implements Renderable {
 
     ctx.restore();
 
-    // if (this.target) {
-    //   ctx.fillStyle = 'rgba(0, 255, 0, .5)';
-    //   ctx.fillRect(
-    //     this.target.x * 16 - 8,
-    //     this.target.y * 16 - 8,
-    //     TILE_SIZE,
-    //     TILE_SIZE
-    //   );
-    // }
-  }
+ }
 }
