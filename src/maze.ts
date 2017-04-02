@@ -311,6 +311,10 @@ const getTileType = (tile: number): TileType => {
 
 export default class Maze implements Renderable {
 
+  static positionIsInsideGhostHouse(pos: Vector2d): boolean {
+    return (pos.x >= 11 && pos.x <= 16) && (pos.y >= 12 && pos.y <= 15);
+  }
+
   static canMove(newPos: Vector2d, state: State): boolean {
     const { x, y } = newPos;
     const { map } = state;

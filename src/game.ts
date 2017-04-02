@@ -10,6 +10,7 @@ import Maze from './maze';
 import Vector2d from './vector2d';
 import PacMan from './pacman';
 import Blinky from './blinky';
+import Pinky from './pinky';
 
 export default class Game {
   private readonly container: HTMLElement;
@@ -77,6 +78,7 @@ export default class Game {
         this.gameObjects.push(new Maze(sprites.find(s => s.name === 'sprites')));
         this.gameObjects.push(new PacMan(sprites.find(s => s.name === 'pacman')));
         this.gameObjects.push(new Blinky(sprites.find(s => s.name === 'ghosts')));
+        this.gameObjects.push(new Pinky(sprites.find(s => s.name === 'ghosts')));
         this.mainloop();
       });
   }

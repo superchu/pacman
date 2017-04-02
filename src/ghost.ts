@@ -10,6 +10,10 @@ import Entity from './entity';
 const TILE_SIZE = 32;
 const TARGET_WHEN_DEAD = new Vector2d(13, 14);
 const TARGET_OUTSIDE_HOUSE = new Vector2d(10, 11);
+const GET_OUT_OF_HOUSE = [
+  new Vector2d(13.5, 15),
+  new Vector2d(13.5, 11)
+];
 
 let tempTarget: Vector2d | null = null;
 
@@ -50,6 +54,8 @@ export abstract class Ghost implements Renderable {
   private isFrightened: boolean = false;
   private isFlashing: boolean = false;
 
+  private forcePath: Vector2d[] = [];
+
   constructor(protected sprite: Sprite | undefined) {
   }
 
@@ -72,12 +78,26 @@ export abstract class Ghost implements Renderable {
 
     let nextDirection = direction;
     const isFrightened = mode === ChaseMode.Frightened && !isDead;
+    const isInGhostHouse = Maze.positionIsInsideGhostHouse(position);
 
-    console.log('isFrightened', isFrightened);
-    console.log('shouldMakeDecision', shouldMakeDecision);
+    if (isInGhostHouse && !this.forcePath.length) {
+      this.forcePath = [...GET_OUT_OF_HOUSE];
+    }
 
     if (shouldMakeDecision) {
-      const target = !isDead ? (tempTarget || this.getTarget(mode, state)) : TARGET_WHEN_DEAD;
+      let target: Vector2d;
+
+      if (isDead) {
+        target = TARGET_WHEN_DEAD;
+      } else {
+        if (this.forcePath.length && !Vector2d.isSame(position, this.forcePath[this.forcePath.length - 1])) {
+          target = this.forcePath.shift() as Vector2d;
+        } else {
+          target = tempTarget || this.getTarget(mode, state);
+        }
+      }
+
+      // const target = !isDead ? (tempTarget || this.getTarget(mode, state)) : TARGET_WHEN_DEAD;
       this.target = target;
       let options = [];
 
@@ -147,6 +167,10 @@ export abstract class Ghost implements Renderable {
           nextDirection = dir;
         }
       });
+    }
+
+    if (!isDead && !isInGhostHouse && Maze.positionIsInsideGhostHouse(getNextPosition(nextDirection, position))) {
+      return direction;
     }
 
     return nextDirection;
@@ -284,7 +308,7 @@ export abstract class Ghost implements Renderable {
     ctx.drawImage(
       sprite.sprite,
       TILE_SIZE * this.getFrame(),
-      isDead || isFrightened ? TILE_SIZE * 4 : this.getSpriteOffset(),
+      isDead || isFrightened ? TILE_SIZE * 4 : TILE_SIZE * this.getSpriteOffset(),
       TILE_SIZE,
       TILE_SIZE,
       0,

@@ -18,6 +18,11 @@ export default class State {
     return this._blinky;
   }
 
+  private _pinky: Entity;
+  public get pinky() {
+    return this._pinky;
+  }
+
   private _score: number = 0;
   public get score() {
     return this._score;
@@ -74,6 +79,12 @@ export default class State {
       new Vector2d(13.5, 11),
       new Vector2d(12, 11),
       Direction.Left
+    );
+
+    this._pinky = new Entity(
+      new Vector2d(13, 14),
+      new Vector2d(13, 14),
+      Direction.Up
     );
   }
 
