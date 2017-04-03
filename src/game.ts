@@ -50,6 +50,15 @@ export default class Game {
       return;
     }
 
+    const isPlaying = this.gameState === GameState.Playing;
+    if (e.keyCode === Key.P) {
+      if (isPlaying) {
+        this.gameState = GameState.Paused;
+      } else {
+        this.gameState = GameState.Playing;
+      }
+    }
+
     const { player } = state;
 
     switch (e.keyCode) {
@@ -98,6 +107,16 @@ export default class Game {
     }
   }
 
+  private renderTitle(title: string, ctx: CanvasRenderingContext2D) {
+    ctx.fillStyle = 'rgba(255, 255, 255, .9';
+    ctx.fillRect(0, this.height / 2 - 30, this.width, 60);
+
+    ctx.font = '20px sans-serif';
+    ctx.fillStyle = '#555';
+    const { width } = ctx.measureText(title);
+    ctx.fillText(title, (this.width - width) / 2 , this.height / 2 + 6);
+  }
+
   render(gameTime: number, ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, this.width, this.height);
@@ -112,5 +131,9 @@ export default class Game {
     this.gameObjects.forEach(obj => obj.render(gameTime, ctx));
 
     ctx.restore();
+
+    if (this.gameState === GameState.Paused) {
+      this.renderTitle('Paused', ctx);
+    }
   }
 }
