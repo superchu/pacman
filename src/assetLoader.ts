@@ -8,7 +8,7 @@ const loadSprite = (name: string): Promise<Sprite> => {
     const sprite = new Image();
     sprite.onload = () => resolve({ name, sprite });
     sprite.onerror = (err) => reject(err);
-    sprite.src = `../assets/${name}.png`;
+    sprite.src = `./assets/${name}.png`;
   });
 };
 
