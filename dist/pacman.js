@@ -2050,6 +2050,14 @@ var Game = function () {
             if (!state) {
                 return;
             }
+            var isPlaying = this.gameState === _enums.GameState.Playing;
+            if (e.keyCode === _enums.Key.P) {
+                if (isPlaying) {
+                    this.gameState = _enums.GameState.Paused;
+                } else {
+                    this.gameState = _enums.GameState.Playing;
+                }
+            }
             var player = state.player;
 
             switch (e.keyCode) {
@@ -2114,6 +2122,19 @@ var Game = function () {
             }
         }
     }, {
+        key: 'renderTitle',
+        value: function renderTitle(title, ctx) {
+            ctx.fillStyle = 'rgba(255, 255, 255, .9';
+            ctx.fillRect(0, this.height / 2 - 30, this.width, 60);
+            ctx.font = '20px sans-serif';
+            ctx.fillStyle = '#555';
+
+            var _ctx$measureText = ctx.measureText(title),
+                width = _ctx$measureText.width;
+
+            ctx.fillText(title, (this.width - width) / 2, this.height / 2 + 6);
+        }
+    }, {
         key: 'render',
         value: function render(gameTime, ctx) {
             ctx.fillStyle = '#000';
@@ -2127,6 +2148,9 @@ var Game = function () {
                 return obj.render(gameTime, ctx);
             });
             ctx.restore();
+            if (this.gameState === _enums.GameState.Paused) {
+                this.renderTitle('Paused', ctx);
+            }
         }
     }]);
     return Game;
