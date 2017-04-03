@@ -3,7 +3,7 @@ import { Sprite } from './assetLoader';
 import State from './state';
 import Vector2d from './vector2d';
 
-const TILE_SIZE = 16;
+export const TILE_SIZE = 16;
 
 export interface Tile {
   col: number;

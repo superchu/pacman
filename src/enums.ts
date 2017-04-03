@@ -1,4 +1,5 @@
 export enum GameState {
+  Ready,
   Playing,
   Paused,
   GameOver

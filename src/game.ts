@@ -11,6 +11,7 @@ import Vector2d from './vector2d';
 import PacMan from './pacman';
 import Blinky from './blinky';
 import Pinky from './pinky';
+import TextRenderer, { Color, FontSize } from './text';
 
 export default class Game {
   private readonly container: HTMLElement;
@@ -21,6 +22,7 @@ export default class Game {
   private gameState: GameState = GameState.Paused;
   private state: State = new State();
   private gameObjects: Renderable[] = [];
+  private textRenderer: TextRenderer;
 
   constructor(selector: string, private width: number, private height: number) {
     this.container = document.querySelector(selector) as HTMLElement;
@@ -59,6 +61,10 @@ export default class Game {
       }
     }
 
+    if (this.gameState === GameState.Paused) {
+      return;
+    }
+
     const { player } = state;
 
     switch (e.keyCode) {
@@ -81,13 +87,15 @@ export default class Game {
     loadSprites([
       'pacman',
       'sprites',
-      'ghosts'
+      'ghosts',
+      'font'
     ])
       .then(sprites => {
         this.gameObjects.push(new Maze(sprites.find(s => s.name === 'sprites')));
         this.gameObjects.push(new PacMan(sprites.find(s => s.name === 'pacman')));
         this.gameObjects.push(new Blinky(sprites.find(s => s.name === 'ghosts')));
         this.gameObjects.push(new Pinky(sprites.find(s => s.name === 'ghosts')));
+        this.textRenderer = new TextRenderer(sprites.find(s => s.name === 'font'));
         this.mainloop();
       });
   }
@@ -117,13 +125,20 @@ export default class Game {
     ctx.fillText(title, (this.width - width) / 2 , this.height / 2 + 6);
   }
 
+  private renderText(text: string, size: FontSize, color: Color, position: Vector2d, ctx: CanvasRenderingContext2D) {
+    const { textRenderer } = this;
+    if (!textRenderer) {
+      return;
+    }
+
+    this.textRenderer.renderText(text, size, color, position, ctx);
+  }
+
   render(gameTime: number, ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, this.width, this.height);
 
-    ctx.font = '12px sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(`${this.state.score}`, 15, 22);
+    this.renderText(this.state.displayScore, FontSize.Normal, Color.White, new Vector2d(3, 1), ctx);
 
     ctx.save();
     ctx.translate(0, 40);
@@ -132,8 +147,14 @@ export default class Game {
 
     ctx.restore();
 
-    if (this.gameState === GameState.Paused) {
-      this.renderTitle('Paused', ctx);
+    switch (this.gameState) {
+      case GameState.Ready:
+        this.renderText('ready!', FontSize.Normal, Color.Yellow, new Vector2d(11, 19.5), ctx);
+        break;
+      case GameState.Paused:
+        this.renderText('paused!', FontSize.Normal, Color.Yellow, new Vector2d(10.7, 19.5), ctx);
+        break;
     }
+
   }
 }

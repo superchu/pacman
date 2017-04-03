@@ -32,6 +32,11 @@ export default class State {
     this._score = score;
   }
 
+  public get displayScore() {
+    const score = this.score.toString();
+    return `${'0000'.substr(0, 4 - score.length)}${score}`;
+  }
+
   private _powerupTimer: number = 0;
   public get powerupTimer() {
     return this._powerupTimer;
