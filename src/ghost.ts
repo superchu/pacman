@@ -36,7 +36,7 @@ const checkPosition = (ghost: Entity, state: State): void => {
       tempTarget = null;
     }
 
-    if (Vector2d.isSame(player.position, ghost.position)) {
+    if (Vector2d.isSame(player.target, ghost.target)) {
       if (hasPowerup) {
         ghost.isDead = true;
         state.score += 200;
