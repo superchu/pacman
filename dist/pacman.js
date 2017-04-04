@@ -2026,6 +2026,8 @@ var Game = function () {
         this.gameState = _enums.GameState.Paused;
         this.state = new _state2.default();
         this.gameObjects = [];
+        this.xDown = null;
+        this.yDown = null;
         this.container = document.querySelector(selector);
         this.canvas = document.createElement('canvas');
         this.canvas.width = this.width;
@@ -2051,6 +2053,52 @@ var Game = function () {
             document.addEventListener('keydown', function (e) {
                 return _this.onKeyDown(e);
             });
+            document.addEventListener('touchstart', function (e) {
+                return _this.onTouchStart(e);
+            });
+            document.addEventListener('touchmove', function (e) {
+                return _this.onTouchMove(e);
+            });
+        }
+    }, {
+        key: 'onTouchStart',
+        value: function onTouchStart(e) {
+            e.preventDefault();
+            this.xDown = e.touches[0].clientX;
+            this.yDown = e.touches[0].clientY;
+        }
+    }, {
+        key: 'onTouchMove',
+        value: function onTouchMove(e) {
+            var xDown = this.xDown,
+                yDown = this.yDown,
+                state = this.state;
+
+            if (!xDown || !yDown) {
+                return;
+            }
+            var player = state.player;
+            var _e$touches$ = e.touches[0],
+                clientX = _e$touches$.clientX,
+                clientY = _e$touches$.clientY;
+
+            var xDiff = xDown - clientX;
+            var yDiff = yDown - clientY;
+            if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                if (xDiff > 0) {
+                    player.nextDirection = _enums.Direction.Left;
+                } else {
+                    player.nextDirection = _enums.Direction.Right;
+                }
+            } else {
+                if (yDiff > 0) {
+                    player.nextDirection = _enums.Direction.Up;
+                } else {
+                    player.nextDirection = _enums.Direction.Down;
+                }
+            }
+            this.xDown = null;
+            this.yDown = null;
         }
     }, {
         key: 'onKeyDown',
