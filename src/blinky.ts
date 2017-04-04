@@ -8,10 +8,6 @@ import Entity from './entity';
 
 export default class Blinky extends Ghost {
 
-  constructor(protected sprite: Sprite | undefined) {
-    super(sprite);
-  }
-
   getSpriteOffset(): number {
     return 0;
   }

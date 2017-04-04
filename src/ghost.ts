@@ -40,12 +40,20 @@ const checkPosition = (ghost: Entity, state: State): void => {
       if (hasPowerup) {
         ghost.isDead = true;
         state.score += 200;
+      } else {
+        if (!player.isDead) {
+          state.lives--;
+        }
       }
     }
   }
 };
 
 export abstract class Ghost implements Renderable {
+  public get name(): string {
+    return 'ghost';
+  }
+
   private target: Vector2d;
   private position: Vector2d;
   private frame: number = 0;
@@ -53,6 +61,7 @@ export abstract class Ghost implements Renderable {
   private isDead: boolean = false;
   private isFrightened: boolean = false;
   private isFlashing: boolean = false;
+  private isPlayerDead: boolean = false;
 
   private forcePath: Vector2d[] = [];
 
@@ -206,7 +215,7 @@ export abstract class Ghost implements Renderable {
 
     this.position = ghost.position;
     this.direction = ghost.direction;
-
+    this.isPlayerDead = state.player.isDead;
     this.updateDirection(ghost, state);
   }
 
@@ -289,11 +298,12 @@ export abstract class Ghost implements Renderable {
     const {
       isDead,
       isFrightened,
+      isPlayerDead,
       position,
       sprite
     } = this;
 
-    if (!sprite || !position) {
+    if (!sprite || !position || isPlayerDead) {
       return;
     }
 

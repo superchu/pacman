@@ -58,14 +58,32 @@ export default class State {
     }
   }
 
+  private _lives: number;
+  public get lives() {
+    return this._lives;
+  }
+
+  public set lives(value: number) {
+    if (value >= 0) {
+      this._lives = value;
+    }
+    this._player.isDead = true;
+  }
+
   constructor() {
   }
 
   reset(): void {
-    this.resetPlayer();
-    this.resetGhosts();
+    this.resetStage();
     this.resetMap();
 
+    this._score = 0;
+    this._lives = 3;
+  }
+
+  resetStage(): void {
+    this.resetPlayer();
+    this.resetGhosts();
     this.hasPowerup = false;
   }
 
@@ -75,8 +93,6 @@ export default class State {
       new Vector2d(14, 23),
       Direction.Right
     );
-
-    this._score = 0;
   }
 
   private resetGhosts(): void {

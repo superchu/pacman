@@ -8,10 +8,6 @@ import Entity from './entity';
 
 export default class Pinky extends Ghost {
 
-  constructor(protected sprite: Sprite | undefined) {
-    super(sprite);
-  }
-
   getSpriteOffset(): number {
     return 1;
   }

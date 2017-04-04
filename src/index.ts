@@ -5,5 +5,5 @@
 import Game from './game';
 
 window.onload = () => {
-  new Game('#gameContainer', 448, 536);
+  new Game('#gameContainer', 448, 580);
 };

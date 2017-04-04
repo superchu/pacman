@@ -310,6 +310,9 @@ const getTileType = (tile: number): TileType => {
 };
 
 export default class Maze implements Renderable {
+  public get name(): string {
+    return 'maze';
+  }
 
   static positionIsInsideGhostHouse(pos: Vector2d): boolean {
     return (pos.x >= 11 && pos.x <= 16) && (pos.y >= 12 && pos.y <= 15);

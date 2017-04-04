@@ -6,7 +6,7 @@ import State from './state';
 import Vector2d from './vector2d';
 import Maze from './maze';
 
-const TILE_SIZE = 32;
+export const TILE_SIZE = 32;
 const SPEED = .5;
 
 const checkPosition = (state: State): void => {
@@ -26,42 +26,62 @@ const checkPosition = (state: State): void => {
 };
 
 export default class PacMan implements Renderable {
+  public get name(): string {
+    return 'ghost';
+  }
+
+  private state: State;
   private position: Vector2d;
   private frame: number = 0;
   private direction: Direction;
+  private isDead: boolean = false;
 
   constructor(private sprite: Sprite | undefined) {
   }
 
   private getFrame() {
-    const anim = {
-      start: 0,
-      end: 2
-    };
+    const { frame, isDead } = this;
+    let anim = [1, 2, 3];
+    let frameSpeed = .5;
 
-    return Math.floor(anim.start + this.frame * .5 % (anim.end) + 1);
+    if (isDead) {
+      anim = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+      frameSpeed = .2;
+    }
+
+    let showFrame = Math.floor(frame * frameSpeed) % anim.length;
+    if (isDead && anim[showFrame] === 14) {
+      this.state.resetStage();
+    }
+
+    return anim[showFrame];
   }
 
   update(gameTime: number, state: State) {
     const { player } = state;
     const { position } = this;
+    const { isDead } = player;
 
-    moveEntity(player, SPEED, state);
+    if (!isDead) {
+      moveEntity(player, SPEED, state);
+    }
 
     if (position) {
-      if (player.position.x !== position.x || player.position.y !== position.y) {
+      if (isDead || player.position.x !== position.x || player.position.y !== position.y) {
         this.frame++;
       }
     }
 
     this.position = player.position;
     this.direction = player.direction;
+    this.isDead = isDead;
+    this.state = state;
 
     checkPosition(state);
   }
 
   render(gameTime: number, ctx: CanvasRenderingContext2D) {
-    const { position, sprite } = this;
+    const { position, sprite, isDead } = this;
 
     if (!sprite || !position) {
       return;
@@ -78,23 +98,25 @@ export default class PacMan implements Renderable {
     let offsetX = 0;
     let offsetY = 0;
 
-    switch (this.direction) {
-      case Direction.Right:
-        ctx.rotate(0);
-        break;
-      case Direction.Left:
-        ctx.rotate(180 * (Math.PI / 180));
-        offsetX = -32;
-        offsetY = -32;
-        break;
-      case Direction.Down:
-        ctx.rotate(90 * (Math.PI / 180));
-        offsetY = -32;
-        break;
-      case Direction.Up:
-        ctx.rotate(-90 * (Math.PI / 180));
-        offsetX = -32;
-        break;
+    if (!isDead) {
+      switch (this.direction) {
+        case Direction.Right:
+          ctx.rotate(0);
+          break;
+        case Direction.Left:
+          ctx.rotate(180 * (Math.PI / 180));
+          offsetX = -32;
+          offsetY = -32;
+          break;
+        case Direction.Down:
+          ctx.rotate(90 * (Math.PI / 180));
+          offsetY = -32;
+          break;
+        case Direction.Up:
+          ctx.rotate(-90 * (Math.PI / 180));
+          offsetX = -32;
+          break;
+      }
     }
 
     ctx.drawImage(

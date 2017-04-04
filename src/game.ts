@@ -11,6 +11,7 @@ import Vector2d from './vector2d';
 import PacMan from './pacman';
 import Blinky from './blinky';
 import Pinky from './pinky';
+import Lifebar from './lifebar';
 import TextRenderer, { Color, FontSize } from './text';
 
 export default class Game {
@@ -23,6 +24,9 @@ export default class Game {
   private state: State = new State();
   private gameObjects: Renderable[] = [];
   private textRenderer: TextRenderer;
+  private xDown: number | null = null;
+  private yDown: number | null = null;
+  private didSwipe: boolean = false;
 
   constructor(selector: string, private width: number, private height: number) {
     this.container = document.querySelector(selector) as HTMLElement;
@@ -46,14 +50,32 @@ export default class Game {
     document.addEventListener('keydown', e => this.onKeyDown(e));
     document.addEventListener('touchstart', e => this.onTouchStart(e));
     document.addEventListener('touchmove', e => this.onTouchMove(e));
+    document.addEventListener('touchend', e => this.onTouchEnd(e));
   }
 
-  private xDown: number | null = null;
-  private yDown: number | null = null;
   private onTouchStart(e: TouchEvent): void {
     e.preventDefault();
-    this.xDown = e.touches[0].clientX;
-    this.yDown = e.touches[0].clientY;
+    const { clientX, clientY } = e.touches[0];
+    this.xDown = clientX;
+    this.yDown = clientY;
+    this.didSwipe = false;
+  }
+
+  private onTouchEnd(e: TouchEvent): void {
+    if (this.gameState === GameState.GameOver) {
+      this.reset();
+      this.xDown = null;
+      this.yDown = null;
+      return;
+    }
+
+    if (!this.didSwipe) {
+      if (this.gameState !== GameState.Paused) {
+        this.gameState = GameState.Paused;
+      } else {
+        this.gameState = GameState.Playing;
+      }
+    }
   }
 
   private onTouchMove(e: TouchEvent): void {
@@ -81,6 +103,7 @@ export default class Game {
       }
     }
 
+    this.didSwipe = Math.abs(xDiff) > 0 || Math.abs(yDiff) > 0;
     this.xDown = null;
     this.yDown = null;
   }
@@ -101,6 +124,11 @@ export default class Game {
     }
 
     if (this.gameState === GameState.Paused) {
+      return;
+    }
+
+    if (this.gameState === GameState.GameOver) {
+      this.reset();
       return;
     }
 
@@ -134,6 +162,7 @@ export default class Game {
         this.gameObjects.push(new PacMan(sprites.find(s => s.name === 'pacman')));
         this.gameObjects.push(new Blinky(sprites.find(s => s.name === 'ghosts')));
         this.gameObjects.push(new Pinky(sprites.find(s => s.name === 'ghosts')));
+        this.gameObjects.push(new Lifebar(sprites.find(s => s.name === 'pacman')));
         this.textRenderer = new TextRenderer(sprites.find(s => s.name === 'font'));
         this.mainloop();
       });
@@ -151,6 +180,11 @@ export default class Game {
   update(gameTime: number): void {
     if (gameTime % 2 === 0) {
       this.gameObjects.forEach(obj => obj.update(gameTime, this.state));
+    }
+
+    const { lives } = this.state;
+    if (lives === 0) {
+      this.gameState = GameState.GameOver;
     }
   }
 
@@ -182,16 +216,28 @@ export default class Game {
     ctx.save();
     ctx.translate(0, 40);
 
-    this.gameObjects.forEach(obj => obj.render(gameTime, ctx));
+    const { gameState, gameObjects } = this;
+
+    if (gameState === GameState.Playing) {
+      gameObjects
+        .forEach(obj => obj.render(gameTime, ctx));
+    } else {
+      gameObjects
+        .filter(obj => obj.name !== 'ghost' && obj.name !== 'pacman')
+        .forEach(obj => obj.render(gameTime, ctx));
+    }
 
     ctx.restore();
 
-    switch (this.gameState) {
+    switch (gameState) {
       case GameState.Ready:
         this.renderText('ready!', FontSize.Normal, Color.Yellow, new Vector2d(11, 19.5), ctx);
         break;
       case GameState.Paused:
         this.renderText('paused!', FontSize.Normal, Color.Yellow, new Vector2d(10.7, 19.5), ctx);
+        break;
+      case GameState.GameOver:
+        this.renderText('game over!', FontSize.Normal, Color.Yellow, new Vector2d(9.3, 13.6), ctx);
         break;
     }
 
