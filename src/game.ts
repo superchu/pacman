@@ -44,6 +44,45 @@ export default class Game {
 
   private bindKeys(): void {
     document.addEventListener('keydown', e => this.onKeyDown(e));
+    document.addEventListener('touchstart', e => this.onTouchStart(e));
+    document.addEventListener('touchmove', e => this.onTouchMove(e));
+  }
+
+  private xDown: number | null = null;
+  private yDown: number | null = null;
+  private onTouchStart(e: TouchEvent): void {
+    e.preventDefault();
+    this.xDown = e.touches[0].clientX;
+    this.yDown = e.touches[0].clientY;
+  }
+
+  private onTouchMove(e: TouchEvent): void {
+    const { xDown, yDown, state } = this;
+    if (!xDown || !yDown) {
+      return;
+    }
+
+    const { player} = state;
+    const { clientX, clientY } = e.touches[0];
+    const xDiff = xDown - clientX;
+    const yDiff = yDown - clientY;
+
+    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+      if (xDiff > 0) {
+        player.nextDirection = Direction.Left;
+      } else {
+        player.nextDirection = Direction.Right;
+      }
+    } else {
+      if (yDiff > 0) {
+        player.nextDirection = Direction.Up;
+      } else {
+        player.nextDirection = Direction.Down;
+      }
+    }
+
+    this.xDown = null;
+    this.yDown = null;
   }
 
   private onKeyDown(e: KeyboardEvent): void {
